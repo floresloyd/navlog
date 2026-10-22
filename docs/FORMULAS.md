@@ -21,7 +21,7 @@ A leg's values are entered on the row of the checkpoint where that leg ends. The
 1. **Magnetic course (MC):** `normalize(TC − variation)`. Example: TC 090° and 6° W (`−6`) gives MC 096°.
 2. **Wind correction angle (WCA):** Let `a = wind-from − TC`. `WCA = asin(wind speed × sin(a) / TAS)`. Positive WCA means steer right. A wind/crosswind combination with absolute crosswind greater than TAS is invalid.
 3. **Magnetic heading (MH):** `normalize(MC + WCA)`.
-4. **Compass deviation:** At each of twelve 30° magnetic headings, `deviation = wrapped(steer heading − magnetic heading)`. The deviation for MH is linearly interpolated between the surrounding card points, including 330° to 000°.
+4. **Compass deviation:** At each of twelve 30° magnetic headings, `deviation = wrapped(deviation − magnetic heading)`. The deviation for MH is linearly interpolated between the surrounding card points, including 330° to 000°.
 5. **Compass heading (CH):** `normalize(MH + interpolated deviation)`.
 6. **Ground speed (GS):** `sqrt(TAS² − (wind speed × sin(a))²) − wind speed × cos(a)`. Zero or negative GS is invalid.
 7. **Leg ETE:** `60 × distance / GS` minutes.
@@ -37,7 +37,7 @@ A leg's values are entered on the row of the checkpoint where that leg ends. The
 - Negative cruise fuel remaining triggers a warning but keeps the mathematical result visible.
 - The VFR altitude check warns above 3,000 ft: MC 000–179° expects odd thousands + 500 ft; MC 180–359° expects even thousands + 500 ft. This is a prototype planning rule and does not replace current regulatory review.
 - If variation is blank, calculation currently uses the prototype sample `−6°`. Set the actual value for the route before use.
-- No route geometry or coordinate lookup is calculated. Optional latitude/longitude fields are stored for future integration; leg distance is entered directly.
+- No route geometry or coordinate lookup is calculated. Waypoint coordinate fields have been removed; leg distance is entered directly.
 
 ## How to review or replace a formula
 

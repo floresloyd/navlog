@@ -1,5 +1,9 @@
-# Future backend boundary
+# Weather server
 
-No backend is required or running in this version. Keep any future service separate from the React application. The browser-facing adapters belong in `src/services/`; formulas and types in `src/domain/` remain pure.
+`server/weather.mjs` serves the built React app and proxies METAR and TAF requests to AviationWeather.gov. Run `npm run build` and `npm run serve` for the production app, or run `npm run dev` for local development; it starts both processes. The default port is 4174; set `PORT` to change it. The server needs outbound HTTPS access to `aviationweather.gov`.
 
-A backend can later add authenticated plans, verified fix and airport data, route geometry, AviationWeather.gov requests with caching and source timestamps, and a PDF generation service. Define and test API contracts before changing the frontend adapters. Do not label sample data as live. Direct 1800WXBRIEF integration needs confirmed provider access; the current app only links to its site.
+The browser calls `GET /api/weather?ids=KOPF`. The response includes `metar`, `taf`, and `fetchedAt`. A missing report is `null`; an upstream failure is reported in `error` while any successful report remains available. Results without failures are cached in memory for five minutes. Airport records are a separate dated FAA NASR bundle in `src/data/faaAirports.json`.
+
+For deployment, route `/api/weather` to this Node server. A static file host alone cannot provide live weather. Check the endpoint directly if the UI reports HTTP 500 or 502; its JSON error body identifies upstream failures when they reach this server.
+
+Authenticated plan storage, route geometry, and PDF generation are not implemented.
