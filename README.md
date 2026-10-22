@@ -51,10 +51,11 @@ There is no routing, state management, chart, or PDF library. State is held in R
 
 ## Run the project
 
-Use Node.js 20.19+ or 22.12+ and npm.
+Use Node.js 24 LTS and npm. The test environment requires Node 24 or newer; Debian distributions may ship an older `node` binary. Check `node -v` before installing dependencies.
 
 ```bash
-npm install
+nvm use        # if nvm is installed; uses .nvmrc
+npm ci         # install the exact lockfile versions
 npm run dev     # starts both Vite and the weather API
 ```
 

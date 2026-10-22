@@ -9,7 +9,7 @@ npm run lint
 npm run build
 ```
 
-`npm test` runs Vitest once with a verbose reporter. A passing run prints each feature or formula case. Tests use jsdom, Testing Library, and a fresh in-memory `localStorage` adapter. They do not require a running backend, network, account, or browser print dialog. For a live development smoke check, run `npm run dev` and request `/api/weather?ids=KOPF` through the Vite URL; the command starts both Vite and the weather API.
+`npm test` first checks for Node.js 24 or newer, then runs Vitest once with a verbose reporter. An older runtime cannot load the locked jsdom ESM dependency and may fail before collecting tests. A passing run prints each feature or formula case. Tests use jsdom, Testing Library, and a fresh in-memory `localStorage` adapter. They do not require a running backend, network, account, or browser print dialog. For a live development smoke check, run `npm run dev` and request `/api/weather?ids=KOPF` through the Vite URL; the command starts both Vite and the weather API.
 
 ## Coverage map
 
