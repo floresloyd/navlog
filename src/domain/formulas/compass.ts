@@ -1,8 +1,8 @@
-import { normalizeHeading, signedAngle } from './angles';
+import { normalizeHeading } from './angles';
 export const CARD_HEADINGS = Array.from({ length: 12 }, (_, index) => index * 30);
-export function cardDeviations(steer: (number | '')[]): number[] | null {
-  if (steer.length !== 12 || steer.some(value => value === '' || !Number.isFinite(value))) return null;
-  return steer.map((value, index) => signedAngle(Number(value) - CARD_HEADINGS[index]));
+export function cardDeviations(values: (number | '')[]): number[] | null {
+  if (values.length !== 12 || values.some(value => typeof value !== 'number' || !Number.isFinite(value) || Math.abs(value) > 180)) return null;
+  return values as number[];
 }
 export function interpolatedDeviation(magneticHeading: number, deviations: number[] | null): number | null {
   if (!deviations) return null;

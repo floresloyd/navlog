@@ -6,7 +6,6 @@ export function createBlankLeg(): Leg {
     id: crypto.randomUUID(), fix: '', vorIdent: '', vorFrequency: '', route: '',
     trueCourse: '', altitudeFt: '', windFromDeg: '', windKt: '',
     temperatureC: '', tasKt: '', gph: '', distanceNm: '',
-    latitude: '', longitude: '',
   };
 }
 
@@ -16,7 +15,7 @@ export function createBlankPlan(): Plan {
     mode: 'IFR',
     setup: { aircraft: '', date: '', time: '', fuelGal: '', variationDeg: '', alternate: '' },
     routes: { IFR: [createBlankLeg(), createBlankLeg()], VFR: [createBlankLeg(), createBlankLeg()] },
-    compassSteer: Array(12).fill(''),
+    compassDeviations: Array(12).fill(''),
     manualWeather: '',
   };
 }
@@ -28,7 +27,7 @@ export function createDemoPlan(): Plan {
 export function isBlankPlan(plan: Plan): boolean {
   const allEmpty = (values: unknown[]) => values.every(value => value === '');
   return allEmpty(Object.values(plan.setup))
-    && allEmpty(plan.compassSteer)
+    && allEmpty(plan.compassDeviations)
     && plan.manualWeather === ''
     && [...plan.routes.IFR, ...plan.routes.VFR].every(leg =>
       allEmpty(Object.entries(leg).filter(([key]) => key !== 'id').map(([, value]) => value)));

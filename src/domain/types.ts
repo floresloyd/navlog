@@ -5,13 +5,12 @@ export interface Leg {
   trueCourse: NumericInput; altitudeFt: NumericInput; windFromDeg: NumericInput;
   windKt: NumericInput; temperatureC: NumericInput; tasKt: NumericInput;
   gph: NumericInput; distanceNm: NumericInput;
-  latitude: NumericInput; longitude: NumericInput;
 }
 export interface Setup {
   aircraft: string; date: string; time: string; fuelGal: NumericInput;
   variationDeg: NumericInput; alternate: string;
 }
-export interface Plan { version: 1; mode: Mode; setup: Setup; routes: Record<Mode, Leg[]>; compassSteer: NumericInput[]; manualWeather: string; }
+export interface Plan { version: 1; mode: Mode; setup: Setup; routes: Record<Mode, Leg[]>; compassDeviations: NumericInput[]; manualWeather: string; }
 export interface LegResult {
   mc?: number; wca?: number; mh?: number; deviation?: number; ch?: number;
   gs?: number; eteMin?: number; etaMin?: number; fuelLeg?: number;

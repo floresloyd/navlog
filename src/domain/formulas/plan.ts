@@ -11,7 +11,7 @@ export function calculatePlan(plan: Plan): PlanResult {
   const departure = utcMinutes(plan.setup.date, plan.setup.time);
   const fuel = plan.setup.fuelGal;
   const variation = valid(plan.setup.variationDeg) ? plan.setup.variationDeg : -6; // Prototype sample; edit in setup.
-  const deviations = cardDeviations(plan.compassSteer);
+  const deviations = cardDeviations(plan.compassDeviations);
   const distances = route.slice(1).map(leg => leg.distanceNm);
   const allDistances = distances.every(value => valid(value) && value >= 0);
   const totalDistance = allDistances ? distances.reduce<number>((sum, value) => sum + Number(value), 0) : undefined;
@@ -19,7 +19,7 @@ export function calculatePlan(plan: Plan): PlanResult {
   let chainValid = true;
   if (departure === null) errors.push('Enter a valid UTC departure date and time.');
   if (!valid(fuel) || fuel < 0) errors.push('Enter fuel on board in gallons.');
-  if (!deviations) errors.push('Complete all 12 compass card steer headings.');
+  if (!deviations) errors.push('Enter all 12 aircraft compass deviations.');
   if (!route[0]?.fix.trim()) errors.push('Enter a departure checkpoint.');
   route.slice(1).forEach((leg, index) => {
     const result = results[index + 1];

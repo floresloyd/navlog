@@ -3,6 +3,7 @@ import { AirportInfo } from './components/AirportInfo';
 import { ClearPlanDialog } from './components/ClearPlanDialog';
 import { CompassCard } from './components/CompassCard';
 import { Field } from './components/Field';
+import { WelcomeDialog } from './components/WelcomeDialog';
 import { NavTable, type NumericLegKey, type TextLegKey } from './components/NavTable';
 import { createBlankLeg, createBlankPlan, createDemoPlan, isBlankPlan } from './data/planTemplates';
 import { calculatePlan } from './domain/formulas/plan';
@@ -10,7 +11,7 @@ import { duration, oneDecimal, utc } from './domain/format';
 import type { Mode, NumericInput, Plan, Setup } from './domain/types';
 import { logEvent } from './services/logger';
 import { loadPlan, savePlan } from './services/storage';
-const numericLegFields = new Set<NumericLegKey>(['trueCourse','altitudeFt','windFromDeg','windKt','temperatureC','tasKt','gph','distanceNm','latitude','longitude']);
+const numericLegFields = new Set<NumericLegKey>(['trueCourse','altitudeFt','windFromDeg','windKt','temperatureC','tasKt','gph','distanceNm']);
 const numericSetupFields = new Set<keyof Setup>(['fuelGal','variationDeg']);
 const numberInput = (value: string): NumericInput => value.trim() === '' ? '' : Number(value);
 type Tab = 'plan' | 'airport' | 'compass';
@@ -20,6 +21,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('plan');
   const [saveStatus, setSaveStatus] = useState('Saved locally');
   const [showClearDialog, setShowClearDialog] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(() => localStorage.getItem('navlog.welcome.v1') !== 'accepted');
   const clearButtonRef = useRef<HTMLButtonElement>(null);
   const showDemo = isBlankPlan(plan);
   const result = useMemo(() => calculatePlan(plan), [plan]);
@@ -38,10 +40,11 @@ export default function App() {
   function changeMode(mode: Mode) { setPlan(current => ({ ...current, mode })); logEvent('mode.changed', { mode }); }
   function addCheckpoint() { setPlan(current => ({ ...current, routes: { ...current.routes, [current.mode]: [...current.routes[current.mode], createBlankLeg()] } })); logEvent('checkpoint.added', { mode: plan.mode }); }
   function removeCheckpoint(index: number) { setPlan(current => ({ ...current, routes: { ...current.routes, [current.mode]: current.routes[current.mode].filter((_, i) => i !== index) } })); logEvent('checkpoint.removed', { mode: plan.mode, index }); }
-  function editCompass(index: number, value: string) { setPlan(current => ({ ...current, compassSteer: current.compassSteer.map((item, i) => i === index ? numberInput(value) : item) })); logEvent('compass.edited', { index }); }
+  function editCompass(index: number, value: string) { setPlan(current => ({ ...current, compassDeviations: current.compassDeviations.map((item, i) => i === index ? numberInput(value) : item) })); logEvent('compass.edited', { index }); }
   function editWeather(value: string) { setPlan(current => ({ ...current, manualWeather: value })); logEvent('weather.edited'); }
   function printPlan() { logEvent('print.requested', { mode: plan.mode }); window.print(); }
   function openBriefing() { logEvent('briefing.opened'); window.open('https://www.1800wxbrief.com/', '_blank', 'noopener,noreferrer'); }
+  function acceptWelcome() { localStorage.setItem('navlog.welcome.v1', 'accepted'); setShowWelcome(false); logEvent('welcome.accepted'); }
   function requestClear() { setShowClearDialog(true); logEvent('plan.clear_requested'); }
   function cancelClear() { setShowClearDialog(false); clearButtonRef.current?.focus(); logEvent('plan.clear_canceled'); }
   function confirmClear() { setPlan(createBlankPlan()); setTab('plan'); setShowClearDialog(false); clearButtonRef.current?.focus(); logEvent('plan.cleared'); }
@@ -53,8 +56,7 @@ export default function App() {
   {!showDemo && result.errors.length > 0 && <div className="issues" role="status"><b>Check the plan</b><ul>{result.errors.map((error,index) => <li key={index}>{error}</li>)}</ul></div>}
   <NavTable route={route} results={visibleResults} mode={plan.mode} onEdit={editLeg} onRemove={removeCheckpoint} />
   {plan.mode === 'VFR' && <div className="rule-note"><b>VFR altitude check</b>{result.legs.some(leg => leg.altitudeWarning) ? ' Amber cells do not match the prototype hemispheric altitude rule.' : ' Above 3,000 ft: odd thousands + 500 eastbound, even thousands + 500 westbound.'}</div>}
-  <div className="below-table"><button className="outline" onClick={addCheckpoint}>+ Add checkpoint</button><span>Enter leg distances from your chart. Coordinates are optional and reserved for future route lookup.</span></div>
-  <details className="coordinates"><summary>Waypoint coordinates · optional</summary><div className="coordinate-grid">{route.map((leg,index) => <div key={leg.id}><b>{leg.fix || `Checkpoint ${index}`}</b><Field label={`Latitude ${index}`} numeric value={leg.latitude} onChange={value => editLeg(index,'latitude',value)} /><Field label={`Longitude ${index}`} numeric value={leg.longitude} onChange={value => editLeg(index,'longitude',value)} /></div>)}</div></details>
+  <div className="below-table"><button className="outline" onClick={addCheckpoint}>+ Add checkpoint</button><span>Enter leg distances from your chart.</span></div>
   <p className="disclaimer">Planning aid only. Cruise fuel excludes taxi, climb, descent and reserves. Verify against the aircraft POH, current charts and NOTAMs, and an official preflight briefing.</p></>}
-  {tab === 'airport' && <AirportInfo plan={plan} onWeather={editWeather} onBriefing={openBriefing} />}{tab === 'compass' && <CompassCard steer={plan.compassSteer} onEdit={editCompass} />}</main>{showClearDialog && <ClearPlanDialog onCancel={cancelClear} onConfirm={confirmClear} />}</div>;
+  {tab === 'airport' && <AirportInfo plan={plan} onWeather={editWeather} onBriefing={openBriefing} />}{tab === 'compass' && <CompassCard deviations={plan.compassDeviations} onEdit={editCompass} />}</main>{showWelcome && <WelcomeDialog onAccept={acceptWelcome} />}{showClearDialog && <ClearPlanDialog onCancel={cancelClear} onConfirm={confirmClear} />}</div>;
 }
