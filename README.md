@@ -8,8 +8,8 @@ NavLog is a React flight planning aid converted from the supplied NavLog prototy
 - **IFR and VFR:** Separate locally saved routes share the aircraft setup and compass card. VFR adds a route label and a hemispheric altitude warning.
 - **Airport info:** Departure, destination, and alternate panels. Airport name, city, elevation and variation come from the FAA NASR CSV effective October 1, 2026. METARs and TAFs are fetched through the local Node server from AviationWeather.gov, with report times and unavailable states. Manual weather notes can be entered. The official 1800WXBRIEF link opens separately.
 - **Compass card:** Enter the aircraft’s deviation at available 30° card headings. The card displays north as 360°. Each leg uses the closest entered heading, with wraparound at north. At least one valid entry is needed for compass headings and completed plan totals.
-- **IFR course:** Enter magnetic course (MC) directly. VFR retains true course (TC) and calculates MC using variation. Wind correction uses wind direction, speed, and TAS; the compass card supplies deviation only after magnetic heading is calculated.
-- **Saved plans:** A first-use pilot notice appears once per browser. Changes automatically save in this browser's `localStorage` under `navlog.plan.v1`. A different browser or cleared storage does not have the saved plan.
+- **IFR and VFR courses:** Enter magnetic course (MC) directly for IFR legs. Enter true course (TC) for VFR legs; variation converts it to MC. Wind direction is entered in degrees true in both modes. For IFR, the calculation converts wind direction to magnetic before finding wind correction. The compass card supplies deviation after magnetic heading is calculated and does not change wind correction.
+- **Saved plans:** A first-use pilot notice appears once per browser. Changes automatically save in this browser's `localStorage` under `navlog.plan.v1`. On load, older saved IFR legs that have TC but no MC receive an MC calculated from their saved TC and setup variation (or the prototype `−6°` fallback if variation is blank). Review migrated courses before use. A different browser or cleared storage does not have the saved plan.
 - **Clear and Demo:** Clear asks for confirmation, then empties the setup, both routes, compass card, and weather notes in local storage. The same button becomes Demo while the plan is blank; Demo restores the bundled sample route. Clearing cannot recover previous edits.
 - **PDF export:** “Export PDF / Print” opens the browser print dialog. Choose “Save as PDF” there. This is a print workflow, not a generated PDF service.
 
@@ -27,16 +27,17 @@ src/
     format.ts       Display rounding and UTC formatting
     types.ts        Shared plan and result contracts
   services/         Browser storage, weather client, and structured event logging
-server/             Weather proxy and production static server
   test/             Test environment setup
   App.tsx           Application state and feature actions
   styles.css        Responsive and print styles
-  *.test.tsx        React feature tests
+  App.test.tsx      React feature tests
+server/
+  weather.mjs       Weather API and production static server
+  README.md         Weather server and API guide
+scripts/            Development startup, Node check, and FAA data import
 docs/
   FORMULAS.md       Client-readable formulas and assumptions
   TESTS.md          Test coverage, commands, and logging
-server/
-  README.md         Future backend boundary and API plan
 ```
 
 ## Tech stack and libraries
@@ -57,7 +58,7 @@ Use Node.js 24 LTS and npm. The test environment requires Node 24 or newer; Debi
 ```bash
 nvm use        # if nvm is installed; uses .nvmrc
 npm ci         # install the exact lockfile versions
-npm run dev     # starts both Vite and the weather API
+npm run dev     # starts Vite and the weather API; Vite forwards /api requests
 ```
 
 Open the local URL printed by Vite (usually `http://localhost:5173`). Other commands:
@@ -77,7 +78,7 @@ npm run serve     # serve production bundle and weather API after build
 
 ## Future backend integration
 
-The `src/services/` layer contains browser storage and the weather client. `server/weather.mjs` proxies AviationWeather.gov because its API does not permit browser cross-origin requests. FAA NASR airport records are bundled with their October 1, 2026 effective date. To refresh, run `python3 scripts/update-faa-airports.py <APT_CSV_ZIP_URL>` with the current cycle’s APT CSV link from the FAA NASR subscription page, review the effective date, then rebuild. Keep formulas in `src/domain/formulas/`; the same typed inputs and outputs can be reused or cross-checked by a server. The [server plan](server/README.md) describes the intended boundary. There are no user accounts or remote plan storage. The weather server has a five minute in-memory cache.
+The `src/services/` layer contains browser storage and the weather client. `server/weather.mjs` proxies AviationWeather.gov because its API does not permit browser cross-origin requests. Weather report times come from the reports; the separate retrieval time only says when the server fetched them. FAA NASR airport records are bundled with their October 1, 2026 effective date. To refresh, run `python3 scripts/update-faa-airports.py <APT_CSV_ZIP_URL>` with the current cycle’s APT CSV link from the FAA NASR subscription page, review the effective date, then rebuild. Keep formulas in `src/domain/formulas/`; the same typed inputs and outputs can be reused or cross-checked by a server. The [weather server and API guide](server/README.md) describes the current boundary. There are no user accounts or remote plan storage. The weather server has a five minute in-memory cache.
 
 ## Current limits
 
