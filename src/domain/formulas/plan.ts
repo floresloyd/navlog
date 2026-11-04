@@ -1,6 +1,6 @@
 import type { LegResult, Plan, PlanResult, NumericInput } from '../types';
 import { magneticCourse, normalizeHeading } from './angles';
-import { cardDeviations, interpolatedDeviation } from './compass';
+import { cardDeviations, nearestDeviation } from './compass';
 import { cruiseFuelGallons, legMinutes, utcMinutes, vfrAltitudeValid } from './flight';
 import { solveWind } from './wind';
 const valid = (value: NumericInput): value is number => typeof value === 'number' && Number.isFinite(value);
@@ -19,24 +19,28 @@ export function calculatePlan(plan: Plan): PlanResult {
   let chainValid = true;
   if (departure === null) errors.push('Enter a valid UTC departure date and time.');
   if (!valid(fuel) || fuel < 0) errors.push('Enter fuel on board in gallons.');
-  if (!deviations) errors.push('Enter all 12 aircraft compass deviations.');
+  if (!deviations) errors.push('Enter at least one valid aircraft compass deviation.');
   if (!route[0]?.fix.trim()) errors.push('Enter a departure checkpoint.');
   route.slice(1).forEach((leg, index) => {
     const result = results[index + 1];
     const label = leg.fix || `Leg ${index + 1}`;
     if (!leg.fix.trim()) result.error = 'Enter a checkpoint name or identifier.';
-    if (valid(leg.trueCourse)) result.mc = magneticCourse(leg.trueCourse, variation);
+    if (plan.mode === 'IFR' && valid(leg.magneticCourse)) result.mc = normalizeHeading(leg.magneticCourse);
+    if (plan.mode === 'VFR' && valid(leg.trueCourse)) result.mc = magneticCourse(leg.trueCourse, variation);
     if (plan.mode === 'VFR' && valid(leg.altitudeFt) && result.mc !== undefined) result.altitudeWarning = !vfrAltitudeValid(leg.altitudeFt, result.mc);
-    const inputs = [leg.trueCourse, leg.tasKt, leg.windFromDeg, leg.windKt, leg.gph, leg.distanceNm];
+    const course = plan.mode === 'IFR' ? leg.magneticCourse : leg.trueCourse;
+    const inputs = [course, leg.tasKt, leg.windFromDeg, leg.windKt, leg.gph, leg.distanceNm];
     if (inputs.some(value => !valid(value)) || !valid(leg.gph) || leg.gph < 0 || !valid(leg.distanceNm) || leg.distanceNm < 0) {
       result.error ??= 'Complete course, wind, TAS, GPH and distance with valid values.';
     } else {
-      const wind = solveWind(leg.trueCourse as number, leg.tasKt as number, leg.windFromDeg as number, leg.windKt as number);
+      const windCourse = plan.mode === 'IFR' ? course as number : leg.trueCourse as number;
+      const windFrom = plan.mode === 'IFR' ? magneticCourse(leg.windFromDeg as number, variation) : leg.windFromDeg as number;
+      const wind = solveWind(windCourse, leg.tasKt as number, windFrom, leg.windKt as number);
       if (!wind) result.error ??= 'Wind/TAS combination has no positive ground speed.';
       else if (result.mc !== undefined) {
         result.wca = wind.wca;
         result.mh = normalizeHeading(result.mc + wind.wca);
-        const deviation = interpolatedDeviation(result.mh, deviations);
+        const deviation = nearestDeviation(result.mh, deviations);
         if (deviation !== null) {
           result.deviation = deviation;
           result.ch = normalizeHeading(result.mh + deviation);
@@ -47,7 +51,7 @@ export function calculatePlan(plan: Plan): PlanResult {
       }
     }
     if (result.error) errors.push(`${label}: ${result.error}`);
-    if (!deviations) result.error ??= 'Compass card is incomplete.';
+    if (!deviations) result.error ??= 'Enter a valid compass card deviation.';
     if (chainValid && !result.error && result.eteMin !== undefined && result.fuelLeg !== undefined && departure !== null && valid(fuel)) {
       elapsed += result.eteMin; used += result.fuelLeg; traveled += leg.distanceNm as number;
       result.etaMin = departure + elapsed;

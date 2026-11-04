@@ -4,7 +4,7 @@ import { samplePlan } from './samplePlan';
 export function createBlankLeg(): Leg {
   return {
     id: crypto.randomUUID(), fix: '', vorIdent: '', vorFrequency: '', route: '',
-    trueCourse: '', altitudeFt: '', windFromDeg: '', windKt: '',
+    trueCourse: '', magneticCourse: '', altitudeFt: '', windFromDeg: '', windKt: '',
     temperatureC: '', tasKt: '', gph: '', distanceNm: '',
   };
 }

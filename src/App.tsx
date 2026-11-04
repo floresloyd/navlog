@@ -11,7 +11,7 @@ import { duration, oneDecimal, utc } from './domain/format';
 import type { Mode, NumericInput, Plan, Setup } from './domain/types';
 import { logEvent } from './services/logger';
 import { loadPlan, savePlan } from './services/storage';
-const numericLegFields = new Set<NumericLegKey>(['trueCourse','altitudeFt','windFromDeg','windKt','temperatureC','tasKt','gph','distanceNm']);
+const numericLegFields = new Set<NumericLegKey>(['trueCourse','magneticCourse','altitudeFt','windFromDeg','windKt','temperatureC','tasKt','gph','distanceNm']);
 const numericSetupFields = new Set<keyof Setup>(['fuelGal','variationDeg']);
 const numberInput = (value: string): NumericInput => value.trim() === '' ? '' : Number(value);
 type Tab = 'plan' | 'airport' | 'compass';

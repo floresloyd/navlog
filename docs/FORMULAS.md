@@ -6,7 +6,8 @@ This guide is for reviewing the current calculation model with clients. Each for
 
 | Input | Unit | Meaning |
 | --- | --- | --- |
-| True course (TC) | degrees true | Intended track for the arriving leg |
+| IFR magnetic course (MC) | degrees magnetic | Entered intended track for the arriving IFR leg |
+| VFR true course (TC) | degrees true | Entered intended track for the arriving VFR leg |
 | Wind direction | degrees true | Direction the wind comes **from** |
 | Wind speed, TAS, ground speed | knots | Nautical miles per hour |
 | Variation | degrees | East positive, west negative |
@@ -18,11 +19,11 @@ A leg's values are entered on the row of the checkpoint where that leg ends. The
 
 ## Calculation sequence
 
-1. **Magnetic course (MC):** `normalize(TC − variation)`. Example: TC 090° and 6° W (`−6`) gives MC 096°.
-2. **Wind correction angle (WCA):** Let `a = wind-from − TC`. `WCA = asin(wind speed × sin(a) / TAS)`. Positive WCA means steer right. A wind/crosswind combination with absolute crosswind greater than TAS is invalid.
+1. **Magnetic course (MC):** IFR uses entered MC directly. VFR uses `normalize(TC − variation)`. Example: TC 090° and 6° W (`−6`) gives MC 096°.
+2. **Wind correction angle (WCA):** VFR uses true wind direction against TC. IFR converts entered true wind direction to magnetic with `wind-from magnetic = normalize(wind-from true − variation)`, then compares it with entered MC. Let `a = wind-from − course` in the same reference. `WCA = asin(wind speed × sin(a) / TAS)`. Positive WCA means steer right. A wind/crosswind combination with absolute crosswind greater than TAS is invalid. The compass card does not affect WCA.
 3. **Magnetic heading (MH):** `normalize(MC + WCA)`.
-4. **Compass deviation:** At each of twelve 30° magnetic headings, `deviation = wrapped(deviation − magnetic heading)`. The deviation for MH is linearly interpolated between the surrounding card points, including 330° to 000°.
-5. **Compass heading (CH):** `normalize(MH + interpolated deviation)`.
+4. **Compass deviation:** Choose the entered card heading nearest MH by circular distance, including across 330° to north. The card labels north 360°; the calculation stores it as 0°. At an exact tie, use the lower listed card index. Blank card positions are skipped.
+5. **Compass heading (CH):** `normalize(MH + chosen deviation)`.
 6. **Ground speed (GS):** `sqrt(TAS² − (wind speed × sin(a))²) − wind speed × cos(a)`. Zero or negative GS is invalid.
 7. **Leg ETE:** `60 × distance / GS` minutes.
 8. **Leg cruise fuel:** `GPH × leg ETE / 60` gallons.
@@ -33,7 +34,7 @@ A leg's values are entered on the row of the checkpoint where that leg ends. The
 ## Warnings and incomplete plans
 
 - A missing checkpoint, blank/invalid leg input, or impossible wind stops complete route totals; the affected leg shows an error.
-- An incomplete compass card stops complete route totals because CH cannot be determined.
+- A compass card with no valid entries stops complete route totals because CH cannot be determined. One valid entry is enough to calculate, though more entries better represent the aircraft’s card.
 - Negative cruise fuel remaining triggers a warning but keeps the mathematical result visible.
 - The VFR altitude check warns above 3,000 ft: MC 000–179° expects odd thousands + 500 ft; MC 180–359° expects even thousands + 500 ft. This is a prototype planning rule and does not replace current regulatory review.
 - If variation is blank, calculation currently uses the prototype sample `−6°`. Set the actual value for the route before use.
@@ -45,7 +46,7 @@ A leg's values are entered on the row of the checkpoint where that leg ends. The
 | --- | --- | --- |
 | Angle wrap and MC | `src/domain/formulas/angles.ts` | `formulas.test.ts` |
 | Wind triangle and GS | `src/domain/formulas/wind.ts` | `formulas.test.ts` |
-| Compass card and interpolation | `src/domain/formulas/compass.ts` | `formulas.test.ts` |
+| Compass card and nearest heading | `src/domain/formulas/compass.ts` | `formulas.test.ts` |
 | ETE, fuel, VFR check, UTC | `src/domain/formulas/flight.ts` | `formulas.test.ts` |
 | Route totals and validation | `src/domain/formulas/plan.ts` | `formulas.test.ts` |
 

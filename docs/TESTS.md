@@ -17,7 +17,8 @@ npm run build
 | --- | --- |
 | Angle and variation | Wraparound and east/west sign |
 | Wind | Calm, crosswind, impossible crosswind, and nonpositive GS |
-| Compass card | Deviation and interpolation across 330° to 000° |
+| Compass card | Partial card, closest entered heading, north wraparound, and 360° display label |
+| IFR course and wind | Direct MC input, saved TC migration, true wind conversion, WCA independence from card, and displayed deviation |
 | Time and fuel | Leg ETE, cruise fuel, low fuel, UTC next-day arrival |
 | VFR | Hemispheric altitude warning and invalid wind |
 | Route calculation | Sample route, edit recalculation, incomplete leg withholding totals |

@@ -2,7 +2,7 @@ export type Mode = 'IFR' | 'VFR';
 export type NumericInput = number | '';
 export interface Leg {
   id: string; fix: string; vorIdent: string; vorFrequency: string; route: string;
-  trueCourse: NumericInput; altitudeFt: NumericInput; windFromDeg: NumericInput;
+  trueCourse: NumericInput; magneticCourse: NumericInput; altitudeFt: NumericInput; windFromDeg: NumericInput;
   windKt: NumericInput; temperatureC: NumericInput; tasKt: NumericInput;
   gph: NumericInput; distanceNm: NumericInput;
 }

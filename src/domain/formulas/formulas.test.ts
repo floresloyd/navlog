@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { samplePlan } from '../../data/samplePlan';
 import { magneticCourse, normalizeHeading } from './angles';
-import { cardDeviations, interpolatedDeviation } from './compass';
+import { cardDeviations, nearestDeviation } from './compass';
 import { cruiseFuelGallons, legMinutes, utcMinutes, vfrAltitudeValid } from './flight';
 import { calculatePlan } from './plan';
 import { solveWind } from './wind';
@@ -10,8 +10,9 @@ describe('navigation formulas', () => {
   it('normalizes headings and applies east positive variation', () => { expect(normalizeHeading(-1)).toBe(359); expect(magneticCourse(90, -6)).toBe(96); expect(magneticCourse(90, 6)).toBe(84); });
   it('solves calm wind and a crosswind independently', () => { expect(solveWind(90, 100, 0, 0)).toEqual({ wca: 0, groundSpeed: 100 }); const crosswind = solveWind(0, 100, 90, 20)!; expect(crosswind.wca).toBeCloseTo(11.537, 2); expect(crosswind.groundSpeed).toBeCloseTo(97.98, 2); });
   it('rejects impossible or nonpositive ground speed', () => { expect(solveWind(0, 80, 90, 90)).toBeNull(); expect(solveWind(0, 80, 0, 100)).toBeNull(); expect(solveWind(0, 0, 0, 0)).toBeNull(); });
-  it('interpolates compass deviations including the wraparound segment', () => { const card = cardDeviations(fresh().compassDeviations)!; expect(card[0]).toBe(1); expect(interpolatedDeviation(15, card)).toBeCloseTo(0); expect(interpolatedDeviation(345, card)).toBeCloseTo(0); expect(cardDeviations([1])).toBeNull(); expect(cardDeviations(Array(12).fill(181))).toBeNull(); });
+  it('uses the closest entered card heading across north and accepts a partial card', () => { const values: (number | '')[] = Array(12).fill(''); values[0] = 3; values[6] = -2; const card = cardDeviations(values)!; expect(nearestDeviation(345, card)).toBe(3); expect(nearestDeviation(175, card)).toBe(-2); expect(cardDeviations(Array(12).fill(''))).toBeNull(); expect(cardDeviations(Array(12).fill(181))).toBeNull(); });
   it('uses manually entered aircraft deviations', () => { const plan = fresh(); plan.compassDeviations = Array(12).fill(5); const result = calculatePlan(plan); expect(result.legs[1].deviation).toBe(5); expect(result.legs[1].ch).toBe(normalizeHeading(result.legs[1].mh! + 5)); });
+  it('calculates IFR wind correction from magnetic course and wind, then applies the closest card deviation', () => { const plan = fresh(); plan.routes.IFR[1].magneticCourse = 90; plan.routes.IFR[1].windFromDeg = 180; plan.routes.IFR[1].windKt = 20; plan.routes.IFR[1].tasKt = 100; plan.compassDeviations = Array(12).fill(''); plan.compassDeviations[3] = 4; const result = calculatePlan(plan); expect(result.errors).not.toContain('Enter at least one valid aircraft compass deviation.'); expect(result.legs[1].mc).toBe(90); expect(result.legs[1].wca).toBeCloseTo(solveWind(90, 100, 186, 20)!.wca); expect(result.legs[1].deviation).toBe(4); expect(result.legs[1].ch).toBeCloseTo(normalizeHeading(result.legs[1].mh! + 4)); });
   it('computes time, fuel, and VFR altitude checks', () => { expect(legMinutes(50, 100)).toBe(30); expect(cruiseFuelGallons(8,30)).toBe(4); expect(vfrAltitudeValid(5500,90)).toBe(true); expect(vfrAltitudeValid(4500,90)).toBe(false); expect(vfrAltitudeValid(4500,270)).toBe(true); });
   it('rejects invalid departure dates', () => { expect(utcMinutes('2026-02-30','14:00')).toBeNull(); expect(utcMinutes('2026-10-21','24:00')).toBeNull(); });
 });

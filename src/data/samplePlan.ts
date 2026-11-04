@@ -1,6 +1,6 @@
 import type { Leg, Plan } from '../domain/types';
-const start = (fix: string): Leg => ({ id: crypto.randomUUID(), fix, vorIdent: '', vorFrequency: '', route: '', trueCourse: '', altitudeFt: '', windFromDeg: '', windKt: '', temperatureC: '', tasKt: '', gph: '', distanceNm: '' });
-const arrive = (fix: string, tc: number, alt: number, wd: number, ws: number, temp: number, tas: number, gph: number, dist: number, route = ''): Leg => ({ ...start(fix), route, trueCourse: tc, altitudeFt: alt, windFromDeg: wd, windKt: ws, temperatureC: temp, tasKt: tas, gph, distanceNm: dist });
+const start = (fix: string): Leg => ({ id: crypto.randomUUID(), fix, vorIdent: '', vorFrequency: '', route: '', trueCourse: '', magneticCourse: '', altitudeFt: '', windFromDeg: '', windKt: '', temperatureC: '', tasKt: '', gph: '', distanceNm: '' });
+const arrive = (fix: string, tc: number, alt: number, wd: number, ws: number, temp: number, tas: number, gph: number, dist: number, route = ''): Leg => ({ ...start(fix), route, trueCourse: tc, magneticCourse: (tc + 6) % 360, altitudeFt: alt, windFromDeg: wd, windKt: ws, temperatureC: temp, tasKt: tas, gph, distanceNm: dist });
 export const samplePlan: Plan = {
   version: 1, mode: 'IFR', setup: { aircraft: 'N123AB', date: '2026-10-07', time: '14:00', fuelGal: 40, variationDeg: -6, alternate: 'KOPF' },
   routes: {

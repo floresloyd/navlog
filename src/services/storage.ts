@@ -1,6 +1,6 @@
 import type { Plan } from '../domain/types';
 import { samplePlan } from '../data/samplePlan';
-import { signedAngle } from '../domain/formulas/angles';
+import { magneticCourse, signedAngle } from '../domain/formulas/angles';
 import { CARD_HEADINGS } from '../domain/formulas/compass';
 import { logEvent } from './logger';
 export const STORAGE_KEY = 'navlog.plan.v1';
@@ -13,6 +13,10 @@ export function loadPlan(): Plan {
         const legacy = value as Plan & { compassSteer?: (number | '')[] };
         if (!Array.isArray(value.compassDeviations) && Array.isArray(legacy.compassSteer)) value.compassDeviations = legacy.compassSteer!.map((heading, index) => heading === '' ? '' : signedAngle(Number(heading) - CARD_HEADINGS[index]));
         delete legacy.compassSteer;
+        for (const leg of value.routes.IFR) {
+          if (leg.magneticCourse === undefined) leg.magneticCourse = typeof leg.trueCourse === 'number' ? magneticCourse(leg.trueCourse, typeof value.setup.variationDeg === 'number' ? value.setup.variationDeg : -6) : '';
+        }
+        for (const leg of value.routes.VFR) if (leg.magneticCourse === undefined) leg.magneticCourse = '';
         for (const leg of [...value.routes.IFR, ...value.routes.VFR]) { delete (leg as typeof leg & { latitude?: number | ''; longitude?: number | '' }).latitude; delete (leg as typeof leg & { longitude?: number | '' }).longitude; }
         logEvent('plan.loaded', { source: 'local' }); return value;
       }
