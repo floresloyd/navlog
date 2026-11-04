@@ -9,7 +9,7 @@ npm run lint
 npm run build
 ```
 
-`npm test` first checks for Node.js 24 or newer, then runs Vitest once with a verbose reporter. An older runtime cannot load the locked jsdom ESM dependency and may fail before collecting tests. A passing run prints each feature or formula case. Tests use jsdom, Testing Library, and a fresh in-memory `localStorage` adapter. They do not require a running backend, network, account, or browser print dialog. For a live development smoke check, run `npm run dev` and request `/api/weather?ids=KOPF` through the Vite URL; the command starts both Vite and the weather API.
+`npm test` first checks for Node.js 24 or newer, then runs Vitest once with a verbose reporter. An older runtime cannot load the locked jsdom ESM dependency and may fail before collecting tests. A passing run prints each feature or formula case. Tests use jsdom, Testing Library, and a fresh in-memory `localStorage` adapter. They do not require a running backend, network, account, or browser print dialog. For a live development smoke check, run `npm run dev` and request `/api/health` and `/api/weather?ids=KOPF` through the Vite URL; Vite forwards `/api` to the Node weather server. The health request checks local routing. Weather lookup also depends on the upstream service and outbound HTTPS.
 
 ## Coverage map
 
@@ -28,7 +28,7 @@ npm run build
 | Supporting screens | Compass edit, FAA airport record, manual weather, briefing link |
 | Navigation and print | The three active tabs are shown, the Phone view tab is absent, and browser printing is requested |
 
-The sample-route assertion is a regression check against the supplied prototype data, not a formal validation of the source workbook or E6B. Before aviation use, add independent benchmark values from the workbook and a vetted flight computer, including tolerances and source references.
+The saved TC migration test covers an older IFR plan with a numeric TC and saved variation; it does not cover every legacy storage shape or blank variation. The sample-route assertion is a regression check against the supplied prototype data, not a formal validation of the source workbook or E6B. Before aviation use, add independent benchmark values from the workbook and a vetted flight computer, including tolerances and source references.
 
 ## Structured feature events
 

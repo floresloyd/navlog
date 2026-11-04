@@ -22,7 +22,7 @@ A leg's values are entered on the row of the checkpoint where that leg ends. The
 1. **Magnetic course (MC):** IFR uses entered MC directly. VFR uses `normalize(TC − variation)`. Example: TC 090° and 6° W (`−6`) gives MC 096°.
 2. **Wind correction angle (WCA):** VFR uses true wind direction against TC. IFR converts entered true wind direction to magnetic with `wind-from magnetic = normalize(wind-from true − variation)`, then compares it with entered MC. Let `a = wind-from − course` in the same reference. `WCA = asin(wind speed × sin(a) / TAS)`. Positive WCA means steer right. A wind/crosswind combination with absolute crosswind greater than TAS is invalid. The compass card does not affect WCA.
 3. **Magnetic heading (MH):** `normalize(MC + WCA)`.
-4. **Compass deviation:** Choose the entered card heading nearest MH by circular distance, including across 330° to north. The card labels north 360°; the calculation stores it as 0°. At an exact tie, use the lower listed card index. Blank card positions are skipped.
+4. **Compass deviation:** Choose the entered card heading nearest MH by circular distance, including across 330° to north. The card labels north 360°; the calculation stores it as 0°. For example, MH 350° selects a deviation entered at 360° over one entered at 330°. At an exact tie, use the lower listed card index. Blank card positions are skipped; one entered deviation applies to every leg heading.
 5. **Compass heading (CH):** `normalize(MH + chosen deviation)`.
 6. **Ground speed (GS):** `sqrt(TAS² − (wind speed × sin(a))²) − wind speed × cos(a)`. Zero or negative GS is invalid.
 7. **Leg ETE:** `60 × distance / GS` minutes.
@@ -38,6 +38,7 @@ A leg's values are entered on the row of the checkpoint where that leg ends. The
 - Negative cruise fuel remaining triggers a warning but keeps the mathematical result visible.
 - The VFR altitude check warns above 3,000 ft: MC 000–179° expects odd thousands + 500 ft; MC 180–359° expects even thousands + 500 ft. This is a prototype planning rule and does not replace current regulatory review.
 - If variation is blank, calculation currently uses the prototype sample `−6°`. Set the actual value for the route before use.
+- Older saved IFR legs with TC but no MC are migrated on load using `MC = normalize(TC − saved variation)`. If saved variation is blank, the migration uses the same prototype `−6°` fallback. Existing MC entries are kept; review migrated values before use.
 - No route geometry or coordinate lookup is calculated. Waypoint coordinate fields have been removed; leg distance is entered directly.
 
 ## How to review or replace a formula
